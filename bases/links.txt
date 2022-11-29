@@ -1,0 +1,3 @@
+https://www.kaggle.com/datasets/danlessa/air-pollution-at-so-paulo-brazil-since-2013?select=estacoes-cetesb.csv.gz
+
+https://www.kaggle.com/datasets/argonalyst/sao-paulo-real-estate-sale-rent-april-2019?resource=download
