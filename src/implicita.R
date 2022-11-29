@@ -3,6 +3,7 @@
 
 library(arules)
 library(arulesViz)
+library(htmlwidgets)
 
 ################################################################
 ### REGRA DE ASSOCIAÇÃO ENTRE POLUIÇÃO E VALORES DE ALUGUEL ####
@@ -11,7 +12,7 @@ set.seed(123)
 options(browser = "firefox")
 
 prepared.df <- st_drop_geometry(aluguel.stations)  %>%
-    select("Price", "Size", "Condo", "Negotiation.Type", "co", "no2", "particulado10", "particulado2.5")
+    select("Price", "Size", "Condo", "Negotiation.Type", "co", "no2", "particulado10", "particulado2.5") %>%
 aluguel.stations.rules <- as(prepared.df, "transactions")
 
 rules <- apriori(aluguel.stations.rules,
@@ -19,8 +20,8 @@ rules <- apriori(aluguel.stations.rules,
                                   maxlen = 10,
                                   target = "rules"))
 
-plot(rules, engine = "plotly")
+saveWidget(plot(rules, engine = "plotly"), file = "output/rules.html")
 
-plot(rules, method = "graph", engine = "htmlwidget")
+saveWidget(plot(rules, method = "graph", engine = "htmlwidget"), file = "output/rulesGraph.html")
 
 ## plot(rules, method = "paracoord")
