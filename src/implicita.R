@@ -13,15 +13,31 @@ options(browser = "firefox")
 
 prepared.df <- st_drop_geometry(aluguel.stations)  %>%
     select("Price", "Size", "Condo", "Negotiation.Type", "co", "no2", "particulado10", "particulado2.5") %>%
-aluguel.stations.rules <- as(prepared.df, "transactions")
+    group_by(Negotiation.Type)  %>%
+    group_split()
 
-rules <- apriori(aluguel.stations.rules,
-                 parameter = list(supp=0.3, conf = 0.5,
-                                  maxlen = 10,
-                                  target = "rules"))
+aluguel.stations.rules <- select(prepared.df[[1]], -Negotiation.Type)  %>%
+    as("transactions")
 
-saveWidget(plot(rules, engine = "plotly"), file = "output/rules.html")
+vendas.stations.rules <- select(prepared.df[[2]], -Negotiation.Type) %>%
+    as("transactions")
 
-saveWidget(plot(rules, method = "graph", engine = "htmlwidget"), file = "output/rulesGraph.html")
+rules.aluguel <- apriori(aluguel.stations.rules,
+                          parameter = list(supp=0.3, conf = 0.5,
+                                           maxlen = 10,
+                                           target = "rules"))
+rules.sales <- apriori(vendas.stations.rules,
+                       parameter = list(supp=0.3, conf = 0.5,
+                                        maxlen = 10, target = "rules"))
 
-## plot(rules, method = "paracoord")
+saveWidget(plot(rules.aluguel, engine = "plotly"), file = "output/rentRules.html")
+saveWidget(plot(rules.sales, engine = "plotly"), file = "output/saleRules.html")
+
+saveWidget(plot(rules.aluguel, method = "graph", engine = "htmlwidget"), file = "output/rentRulesGraph.html")
+saveWidget(plot(rules.sales, method = "graph", engine = "htmlwidget"), file = "output/salesRulesGraph.html")
+
+plot(rules.aluguel, method = "paracoord")
+savePlot(filename = "output/rentParacoord.png", type="png")
+
+plot(rules.sales, method = "paracoord")
+savePlot(filename = "output/salesParacoord.png", type="png")
