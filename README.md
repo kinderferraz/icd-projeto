@@ -11,7 +11,7 @@ As seguintes bases de dados foram utilizadas, ambas retiradas do _Kaggle_:
 
 [Mercado imobiliário de são paulo em abril de 2019](https://www.kaggle.com/datasets/argonalyst/sao-paulo-real-estate-sale-rent-april-2019)
 
-Considerando o tamanho das bases, não foi possível incluí-las no github.
+Considerando o tamanho das bases, foram incluidos os arquivos compactados no diretório [bases](https://github.com/kinderferraz/icd-projeto/tree/master/bases).  
 Sendo assim, será necessário baixá-las e descompactar os arquivos nos seguintes locais:
 - poluição: ./input/spAirPollution/
 - mercado imobiliário: ./input/realEstate/sp
