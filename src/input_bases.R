@@ -1,5 +1,15 @@
+## instalar a lib se necessário
+
+## install.packages("geojsonio")
+## install.packages("broom")
+## install.packages("tidyr")
+
+##library(geojsonio)
+
 library(dplyr)
-library(sp)
+library(tidyr)
+library(broom)
+library(sf)
 
 ################################################################
 ### BASE DE POLUICAO EM SP                                  ####
@@ -13,7 +23,7 @@ library(sp)
    ## > situacao_rede = as.factor(Situacao_Rede)
 ## os demais foram filtrados ao longo da análise da base, de modo que optei por
 ## deixá-los no transmute como forma de evidenciar a evolução do input
-estacoes <- read.csv("trabalho/input/spAirPollution/estacoes-cetesb.csv/estacoes-cetesb.csv"
+estacoes <- read.csv("input/spAirPollution/estacoes-cetesb.csv/estacoes-cetesb.csv"
                      ## ,fileEncoding = "LATIN-1"
                      ) %>%
     select("ID", "Municipio", "Nome", "x", "y") %>%
@@ -38,10 +48,11 @@ str(estacoes)
 
 ## right join irá atuar como um filtro, mantendo apenas as linhas
 ## estiverem na 2 tabela (a do filtro)
-pollution_records <- read.csv("trabalho/input/spAirPollution/cetesb.csv/cetesb.csv")  %>%
+pollution_records <- read.csv("input/spAirPollution/cetesb.csv/cetesb.csv")  %>%
     select("time", "id", "CO", "NO2", "MP10", "MP2.5", "O3")  %>%
     right_join(estacoes, by = c("id" = "idt"))  %>%
     transmute(idt = id
+             ,x = x, y = y
              ,data = as.Date(time)
              ,nome = nome
              ,co = CO
@@ -50,6 +61,8 @@ pollution_records <- read.csv("trabalho/input/spAirPollution/cetesb.csv/cetesb.c
              ,particulado2.5 = MP2.5
              ,ozonio = 03
               )
+
+## coordinates(pollution_records) <- ~x+y
 
 ## considerando que a tabela tem 660101 registros
 ## selecionamos os poluentes com maior numero de registros
@@ -77,13 +90,16 @@ pollution_records <- read.csv("trabalho/input/spAirPollution/cetesb.csv/cetesb.c
 ## > nrow(data[is.na(data$TRS),])
 ## [1] 624588
 
+pollution.april19 <- pollution_records  %>%
+    filter(between(data, as.Date('2019-04-01'), as.Date('2019-05-01')))
+
 
 ################################################################
 ### BASE DE ALUGUEIS EM SP                                  ####
 ################################################################
 ## essa base ta muito linda, direto do kaggle <3
 
-aluguel <- read.csv("trabalho/input/realEstate/sp/spRealEstate_2019_04.csv") %>%
+aluguel <- read.csv("input/realEstate/sp/spRealEstate_2019_04.csv") %>%
     mutate(
         Swimming.Pool = ifelse(Swimming.Pool == 1, TRUE, FALSE)
       , New = ifelse(New == 1, TRUE, FALSE)
@@ -92,3 +108,43 @@ aluguel <- read.csv("trabalho/input/realEstate/sp/spRealEstate_2019_04.csv") %>%
       , Elevator = ifelse(Elevator == 1, TRUE, FALSE)
       , Negotiation.Type = as.factor(Negotiation.Type)
     )
+## coordinates(aluguel) <- ~ Latitude + Longitude
+
+
+################################################################
+### SP GEOJSON                                              ####
+################################################################
+geojson.sp <- geojson_read(url_file_string = "input/spGeojson/bairros.geojson")
+geojson.sp.tidy <- tidy(geojson.sp)
+
+## ggplot() +
+##     geom_polygon(data = geojon.sp.tidy, aes( x = long, y = lat, group = group), fill="#69b3a2", color="white") +
+##     theme_void() +
+##     coord_map()
+
+################################################################
+###    join bases com base na estação mais proxima          ####
+################################################################
+
+## tentativa falha
+## ## retorna a menor distancia para uma linha do do
+## closest.station <- function(row){
+##   dists <- (row[["Latitude"]] - estacoes$x)^2 + (row[["Logitude"]]- estacoes$y)^2
+##   return (cbind(estacoes[which.min(dists),], distance = min(dists)))
+## }
+##
+## alugel.stations <- cbind(aluguel, do.call(rbind, lapply(1:nrow(aluguel), function(x){
+##     closest.station(aluguel[x,])
+## })))
+
+## segunda tentativa
+
+aluguel.coordenadas <- aluguel %>%
+    st_as_sf(coords = c("Latitude", "Longitude"), remove = FALSE) %>%
+    st_set_crs(2193)
+
+station.coordenadas <- pollution.april19 %>%
+    st_as_sf(coords = c("x", "y"), remove = FALSE) %>%
+    st_set_crs(2193)
+
+aluguel.stations <- st_join(aluguel.coordenadas, station.coordenadas, join = st_nearest_feature)
