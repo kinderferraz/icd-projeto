@@ -30,6 +30,18 @@ rules.sales <- apriori(vendas.stations.rules,
                        parameter = list(supp=0.3, conf = 0.5,
                                         maxlen = 10, target = "rules"))
 
+rules.sales.part10 <- apriori(vendas.stations.rules,
+                              parameter = list(supp = 0.3, conf = 0.5,
+                                               maxlen = 10, minlen = 2),
+                              appearance = list(default = "lhs", rhs="particulado10=[39,63]"))
+
+rules.rent.part10 <- apriori(aluguel.stations.rules,
+                             parameter = list(supp = 0.3, conf = 0.5,
+                                              maxlen = 10, minlen = 2),
+                             appearance = list(default = "lhs", rhs="particulado10=[39,69]"))
+
+
+
 saveWidget(plot(rules.aluguel, engine = "plotly"), file = "output/rentRules.html")
 saveWidget(plot(rules.sales, engine = "plotly"), file = "output/saleRules.html")
 
